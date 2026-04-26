@@ -10,12 +10,11 @@ BOT_TOKEN = "8600054781:AAHlBkWQLf8RS5TMoSx5qG2KcAjhQGIqgnU"
 
 app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# --- DOWNLOADER FUNCTION ---
 def download_video(url):
     ydl_opts = {
         'cookiefile': 'cookies.txt', 
-        # Format එක වෙනස් කළා - වීඩියෝ සහ ඕඩියෝ දෙකම තියෙන හොඳම තත්ත්වය තෝරනවා
-        'format': 'best[ext=mp4]/best', 
+        # Format එක සරල කළා - මේකෙන් ගොඩක් වෙලාවට අර error එක එන එක නවතිනවා
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'max_filesize': 500 * 1024 * 1024,
         'quiet': True,
@@ -27,47 +26,27 @@ def download_video(url):
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
 
-# --- BOT COMMANDS ---
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    await message.reply_text(
-        f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\n"
-        "🚀 **Shehan Youtube Downloader** දැන් වැඩ.\n"
-        "YouTube Link එක එවන්න."
-    )
+    await message.reply_text(f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\nLink එක එවන්න.")
 
 @app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
     url = message.text
     if "youtube.com" in url or "youtu.be" in url:
-        status_msg = await message.reply_text("⏳ වීඩියෝව පරීක්ෂා කරමින් පවතී...")
-        
+        status_msg = await message.reply_text("⏳ පොඩ්ඩක් ඉන්න...")
         try:
-            if not os.path.exists("downloads"):
-                os.makedirs("downloads")
-
-            await status_msg.edit("📥 බාගත වෙමින් පවතී (Downloading)...")
-            
+            if not os.path.exists("downloads"): os.makedirs("downloads")
             loop = asyncio.get_event_loop()
             file_path = await loop.run_in_executor(None, download_video, url)
-
-            await status_msg.edit("📤 Telegram වෙත පටවමින් පවතී (Uploading)...")
-            
-            await message.reply_video(
-                video=file_path,
-                caption=f"✅ **Shehan Hansaka Bot** මගින් බාගත කළා.",
-                supports_hosting=True
-            )
-            
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            await status_msg.edit("📤 Upload වෙමින් පවතී...")
+            await message.reply_video(video=file_path, caption="✅ Done by Shehan Hansaka")
+            if os.path.exists(file_path): os.remove(file_path)
             await status_msg.delete()
-
         except Exception as e:
-            await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)[:150]}")
-    else:
-        await message.reply_text("⚠️ කරුණාකර නිවැරදි YouTube ලින්ක් එකක් එවන්න.")
+            await status_msg.edit(f"❌ වැරදීමක්: {str(e)[:100]}")
+    # ලින්ක් එකක් නෙමෙයි නම් රිප්ලයි කරන්නේ නැහැ (මැසේජ් වැස්ස නවත්තන්න)
 
 if __name__ == "__main__":
-    print("Bot is Starting...")
+    print("Bot is starting...")
     app.run()
