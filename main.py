@@ -13,22 +13,15 @@ app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 # --- DOWNLOADER FUNCTION ---
 def download_video(url):
     ydl_opts = {
+        # GitHub එකට දාපු cookies.txt ෆයිල් එක පාවිච්චි කිරීම
+        'cookiefile': 'cookies.txt', 
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'max_filesize': 500 * 1024 * 1024, # 500MB Limit
-        # YouTube Block මඟහරවා ගැනීමට අවශ්‍ය සෙටින්ග්ස්
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
-        'ignoreerrors': False,
-        'logtostderr': False,
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'referer': 'https://www.google.com/',
-        'add_header': [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language: en-us,en;q=0.5',
-            'Sec-Fetch-Mode: navigate',
-        ],
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -39,8 +32,8 @@ def download_video(url):
 async def start(client, message):
     await message.reply_text(
         f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\n"
-        "🚀 **Shehan Youtube Downloader** දැන් සක්‍රීයයි.\n"
-        "මට YouTube Link එකක් එවන්න, මම එය බාගත කර දෙන්නම්."
+        "🚀 **Shehan Youtube Downloader** සක්‍රීයයි.\n"
+        "YouTube Link එක එවන්න, මම එය බාගත කර දෙන්නම්."
     )
 
 @app.on_message(filters.text & filters.private)
@@ -50,7 +43,6 @@ async def handle_download(client, message):
         status_msg = await message.reply_text("⏳ වීඩියෝව පරීක්ෂා කරමින් පවතී...")
         
         try:
-            # Download folder එකක් නැත්නම් හදනවා
             if not os.path.exists("downloads"):
                 os.makedirs("downloads")
 
@@ -69,23 +61,22 @@ async def handle_download(client, message):
                 supports_hosting=True
             )
             
-            # ඉඩ ඉතිරි කර ගැනීමට සර්වර් එකේ තියෙන file එක මකා දැමීම
+            # සර්වර් එකේ ඉඩ ඉතිරි කර ගැනීමට file එක මකා දැමීම
             if os.path.exists(file_path):
                 os.remove(file_path)
             await status_msg.delete()
 
         except Exception as e:
-            # වැරැද්දක් වුණොත් ඒක පෙන්වනවා
             error_text = str(e)
-            if "Sign in to confirm you’re not a bot" in error_text:
-                await status_msg.edit("❌ YouTube එකෙන් සර්වර් එක බ්ලොක් කරලා. පසුව උත්සාහ කරන්න හෝ වෙනත් ලින්ක් එකක් දෙන්න.")
+            # Cookie එකේ අවුලක් හෝ Block එකක් දැයි පරීක්ෂා කිරීම
+            if "Sign in to confirm" in error_text:
+                await status_msg.edit("❌ YouTube එකෙන් තවමත් බ්ලොක් කරනවා. කරුණාකර අලුත් cookies.txt එකක් දාන්න.")
             else:
                 await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {error_text[:100]}")
     else:
-        # YouTube ලින්ක් එකක් නෙමෙයි නම්
         await message.reply_text("⚠️ කරුණාකර නිවැරදි YouTube ලින්ක් එකක් එවන්න.")
 
 # බොට් ක්‍රියාත්මක කිරීම
 if __name__ == "__main__":
-    print("Shehan's Bot is Starting...")
+    print("Shehan's Bot is Starting with Cookies...")
     app.run()
