@@ -13,16 +13,16 @@ app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 def download_video(url):
     ydl_opts = {
         'cookiefile': 'cookies.txt', 
-        # මෙන්න මේ පේළිය මම වෙනස් කළා. 
-        # '18' කියන්නේ 360p (වීඩියෝ + ඕඩියෝ දෙකම තියෙන) MP4 format එක. 
-        # ffmpeg නැති සර්වර් වලට හොඳම විසඳුම මේකයි.
-        'format': '18/best[ext=mp4]/best', 
+        # මෙන්න මේකයි වැදගත්ම වෙනස:
+        # b = හොඳම quality එක, f = format එක. 
+        # ffmpeg නැති නිසා අපි ඉල්ලන්නේ video+audio දැනටමත් තියෙන (ext=mp4) format එකක් විතරයි.
+        'format': 'best[ext=mp4]/best', 
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'max_filesize': 500 * 1024 * 1024,
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -30,7 +30,7 @@ def download_video(url):
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    await message.reply_text(f"👋 හලෝ {message.from_user.first_name}!\n\nලින්ක් එක එවන්න, මම බාගත කරලා දෙන්නම්. 🚀")
+    await message.reply_text(f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\nLink එක එවන්න, මම බාගත කරලා දෙන්නම්. 🚀")
 
 @app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
@@ -41,12 +41,19 @@ async def handle_download(client, message):
             if not os.path.exists("downloads"): os.makedirs("downloads")
             loop = asyncio.get_event_loop()
             file_path = await loop.run_in_executor(None, download_video, url)
+            
             await status.edit("📤 Telegram වෙත පටවමින් පවතී...")
-            await message.reply_video(video=file_path, caption="✅ Done by Shehan Hansaka")
+            await message.reply_video(
+                video=file_path, 
+                caption=f"✅ **Downloaded Successfully!**\n\n👨‍💻 Bot by Shehan Hansaka",
+                supports_hosting=True
+            )
+            
             if os.path.exists(file_path): os.remove(file_path)
             await status.delete()
         except Exception as e:
-            await status.edit(f"❌ වැරදීමක්: {str(e)[:150]}")
+            # Error එක පෙන්වන විදිහ පොඩ්ඩක් සරල කළා
+            await status.edit(f"❌ වැරදීමක්: {str(e)[:100]}")
 
 if __name__ == "__main__":
     app.run()
