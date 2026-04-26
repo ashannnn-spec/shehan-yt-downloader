@@ -2,48 +2,35 @@ import os
 import asyncio
 import yt_dlp
 from pyrogram import Client, filters
-from flask import Flask
-import threading
-
-# Render එකේ බොට්ව Live තියාගන්න Flask app එක
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Shehan's Bot is Running!"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080)
 
 # --- CONFIGURATION ---
 API_ID = 39120212
 API_HASH = "891859ea1a8523a0653b0344198f23fc"
 BOT_TOKEN = "8600054781:AAHlBkWQLf8RS5TMoSx5qG2KcAjhQGIqgnU"
 
-bot = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # --- DOWNLOADER FUNCTION ---
 def download_video(url):
     ydl_opts = {
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'max_filesize': 1024 * 1024 * 1024, # 1GB Limit
+        'max_filesize': 500 * 1024 * 1024, # 500MB දක්වා අඩු කරමු safe වෙන්න
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
 
 # --- BOT COMMANDS ---
-@bot.on_message(filters.command("start") & filters.private)
+@app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.reply_text(
         f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\n"
-        "🚀 **Shehan Youtube Video Downloader** වෙත සාදරයෙන් පිළිගනිමු.\n"
-        "මට ඕනෑම YouTube Link එකක් එවන්න, මම එය 1GB දක්වා download කර දෙන්නම්.\n\n"
-        "👨‍💻 Created by: Shehan Hansaka"
+        "🚀 **Shehan Youtube Video Downloader** දැන් සක්‍රීයයි.\n"
+        "මට YouTube Link එකක් එවන්න."
     )
 
-@bot.on_message(filters.text & filters.private)
+@app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
     url = message.text
     if "youtube.com" in url or "youtu.be" in url:
@@ -60,7 +47,7 @@ async def handle_download(client, message):
             await status_msg.edit("📤 Telegram වෙත පටවමින් පවතී (Uploading)...")
             await message.reply_video(
                 video=file_path,
-                caption=f"✅ **Downloaded successfully!**\n\n🎬 Title: `{os.path.basename(file_path)}` \n👨‍💻 Bot by Shehan Hansaka",
+                caption=f"✅ **Downloaded successfully!**\n👨‍💻 Bot by Shehan Hansaka",
                 supports_hosting=True
             )
             
@@ -71,10 +58,8 @@ async def handle_download(client, message):
         except Exception as e:
             await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)}")
     else:
-        await message.reply_text("⚠️ කරුණාකර නිවැරදි YouTube ලින්ක් එකක් එවන්න.")
+        # ලින්ක් එකක් නෙමෙයි නම් නිකන් ඉන්නවා (නැත්නම් හැම මැසේජ් එකටම රිප්ලයි කරයි)
+        pass
 
-# Flask සර්වර් එක background එකේ run කිරීම
-threading.Thread(target=run_flask).start()
-
-print("Bot is starting...")
-bot.run()
+print("Shehan's Bot is starting...")
+app.run()
