@@ -15,7 +15,7 @@ def download_social_video(url):
     ydl_opts = {
         'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'max_filesize': 50 * 1024 * 1024, # TikTok වලට 50MB ඇති
+        'max_filesize': 50 * 1024 * 1024,
         'quiet': True,
         'no_warnings': True,
     }
@@ -36,7 +36,6 @@ async def start(client, message):
 async def handle_download(client, message):
     url = message.text
     
-    # TikTok, Facebook, Instagram ලින්ක් එකක්දැයි බලමු
     if any(site in url for site in ["tiktok.com", "facebook.com", "instagram.com", "fb.watch"]):
         status_msg = await message.reply_text("⏳ වීඩියෝව බාගත කරමින් පවතී...")
         
@@ -49,10 +48,11 @@ async def handle_download(client, message):
 
             await status_msg.edit("📤 ටෙලිග්‍රෑම් වෙත පටවමින් පවතී...")
             
+            # මෙන්න මෙතන තමයි වැරැද්ද තිබුණේ. supports_streaming කියලා මම නිවැරදි කළා.
             await message.reply_video(
                 video=file_path,
                 caption=f"✅ **සාර්ථකව බාගත කළා!**\n👨‍💻 Bot by Shehan Hansaka",
-                supports_hosting=True
+                supports_streaming=True
             )
             
             if os.path.exists(file_path):
@@ -62,7 +62,6 @@ async def handle_download(client, message):
         except Exception as e:
             await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)[:100]}")
     else:
-        # YouTube එව්වොත් පණිවිඩයක් දෙමු
         if "youtube.com" in url or "youtu.be" in url:
             await message.reply_text("⚠️ කණගාටුයි, දැනට YouTube බාගත කළ නොහැක. TikTok/FB ලින්ක් එකක් එවන්න.")
         else:
