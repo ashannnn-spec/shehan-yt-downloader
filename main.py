@@ -13,8 +13,10 @@ app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 def download_video(url):
     ydl_opts = {
         'cookiefile': 'cookies.txt', 
-        # Format එක සරල කළා - මේකෙන් ගොඩක් වෙලාවට අර error එක එන එක නවතිනවා
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        # මෙන්න මේ පේළිය මම වෙනස් කළා. 
+        # '18' කියන්නේ 360p (වීඩියෝ + ඕඩියෝ දෙකම තියෙන) MP4 format එක. 
+        # ffmpeg නැති සර්වර් වලට හොඳම විසඳුම මේකයි.
+        'format': '18/best[ext=mp4]/best', 
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'max_filesize': 500 * 1024 * 1024,
         'quiet': True,
@@ -28,25 +30,23 @@ def download_video(url):
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    await message.reply_text(f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\nLink එක එවන්න.")
+    await message.reply_text(f"👋 හලෝ {message.from_user.first_name}!\n\nලින්ක් එක එවන්න, මම බාගත කරලා දෙන්නම්. 🚀")
 
 @app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
     url = message.text
     if "youtube.com" in url or "youtu.be" in url:
-        status_msg = await message.reply_text("⏳ පොඩ්ඩක් ඉන්න...")
+        status = await message.reply_text("⏳ වීඩියෝව පරීක්ෂා කරමින් පවතී...")
         try:
             if not os.path.exists("downloads"): os.makedirs("downloads")
             loop = asyncio.get_event_loop()
             file_path = await loop.run_in_executor(None, download_video, url)
-            await status_msg.edit("📤 Upload වෙමින් පවතී...")
+            await status.edit("📤 Telegram වෙත පටවමින් පවතී...")
             await message.reply_video(video=file_path, caption="✅ Done by Shehan Hansaka")
             if os.path.exists(file_path): os.remove(file_path)
-            await status_msg.delete()
+            await status.delete()
         except Exception as e:
-            await status_msg.edit(f"❌ වැරදීමක්: {str(e)[:100]}")
-    # ලින්ක් එකක් නෙමෙයි නම් රිප්ලයි කරන්නේ නැහැ (මැසේජ් වැස්ස නවත්තන්න)
+            await status.edit(f"❌ වැරදීමක්: {str(e)[:150]}")
 
 if __name__ == "__main__":
-    print("Bot is starting...")
     app.run()
