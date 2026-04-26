@@ -10,50 +10,64 @@ BOT_TOKEN = "8600054781:AAHlBkWQLf8RS5TMoSx5qG2KcAjhQGIqgnU"
 
 app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-def download_video(url):
+# --- DOWNLOADER FUNCTION ---
+def download_social_video(url):
     ydl_opts = {
-        'cookiefile': 'cookies.txt', 
-        # මෙන්න මේකයි වැදගත්ම වෙනස:
-        # b = හොඳම quality එක, f = format එක. 
-        # ffmpeg නැති නිසා අපි ඉල්ලන්නේ video+audio දැනටමත් තියෙන (ext=mp4) format එකක් විතරයි.
-        'format': 'best[ext=mp4]/best', 
+        'format': 'best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'max_filesize': 500 * 1024 * 1024,
+        'max_filesize': 50 * 1024 * 1024, # TikTok වලට 50MB ඇති
         'quiet': True,
         'no_warnings': True,
-        'nocheckcertificate': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
 
+# --- BOT COMMANDS ---
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    await message.reply_text(f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\nLink එක එවන්න, මම බාගත කරලා දෙන්නම්. 🚀")
+    await message.reply_text(
+        f"👋 හලෝ {message.from_user.first_name}!\n\n"
+        "🚀 **Shehan Social Media Downloader** සක්‍රීයයි.\n"
+        "මට TikTok, FB හෝ Instagram ලින්ක් එකක් එවන්න."
+    )
 
 @app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
     url = message.text
-    if "youtube.com" in url or "youtu.be" in url:
-        status = await message.reply_text("⏳ වීඩියෝව පරීක්ෂා කරමින් පවතී...")
+    
+    # TikTok, Facebook, Instagram ලින්ක් එකක්දැයි බලමු
+    if any(site in url for site in ["tiktok.com", "facebook.com", "instagram.com", "fb.watch"]):
+        status_msg = await message.reply_text("⏳ වීඩියෝව බාගත කරමින් පවතී...")
+        
         try:
-            if not os.path.exists("downloads"): os.makedirs("downloads")
+            if not os.path.exists("downloads"):
+                os.makedirs("downloads")
+
             loop = asyncio.get_event_loop()
-            file_path = await loop.run_in_executor(None, download_video, url)
+            file_path = await loop.run_in_executor(None, download_social_video, url)
+
+            await status_msg.edit("📤 ටෙලිග්‍රෑම් වෙත පටවමින් පවතී...")
             
-            await status.edit("📤 Telegram වෙත පටවමින් පවතී...")
             await message.reply_video(
-                video=file_path, 
-                caption=f"✅ **Downloaded Successfully!**\n\n👨‍💻 Bot by Shehan Hansaka",
+                video=file_path,
+                caption=f"✅ **සාර්ථකව බාගත කළා!**\n👨‍💻 Bot by Shehan Hansaka",
                 supports_hosting=True
             )
             
-            if os.path.exists(file_path): os.remove(file_path)
-            await status.delete()
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            await status_msg.delete()
+
         except Exception as e:
-            # Error එක පෙන්වන විදිහ පොඩ්ඩක් සරල කළා
-            await status.edit(f"❌ වැරදීමක්: {str(e)[:100]}")
+            await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)[:100]}")
+    else:
+        # YouTube එව්වොත් පණිවිඩයක් දෙමු
+        if "youtube.com" in url or "youtu.be" in url:
+            await message.reply_text("⚠️ කණගාටුයි, දැනට YouTube බාගත කළ නොහැක. TikTok/FB ලින්ක් එකක් එවන්න.")
+        else:
+            await message.reply_text("⚠️ කරුණාකර නිවැරදි වීඩියෝ ලින්ක් එකක් එවන්න.")
 
 if __name__ == "__main__":
+    print("Social Downloader is starting...")
     app.run()
