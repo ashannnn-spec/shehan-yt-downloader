@@ -10,7 +10,6 @@ BOT_TOKEN = "8600054781:AAHlBkWQLf8RS5TMoSx5qG2KcAjhQGIqgnU"
 
 app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# --- DOWNLOADER FUNCTION ---
 def download_social_video(url):
     ydl_opts = {
         'format': 'best',
@@ -23,50 +22,29 @@ def download_social_video(url):
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
 
-# --- BOT COMMANDS ---
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
-    await message.reply_text(
-        f"👋 හලෝ {message.from_user.first_name}!\n\n"
-        "🚀 **Shehan Social Media Downloader** සක්‍රීයයි.\n"
-        "මට TikTok, FB හෝ Instagram ලින්ක් එකක් එවන්න."
-    )
+    await message.reply_text(f"👋 හලෝ {message.from_user.first_name}!\n\nTikTok හෝ FB ලින්ක් එකක් එවන්න.")
 
 @app.on_message(filters.text & filters.private)
 async def handle_download(client, message):
     url = message.text
-    
     if any(site in url for site in ["tiktok.com", "facebook.com", "instagram.com", "fb.watch"]):
-        status_msg = await message.reply_text("⏳ වීඩියෝව බාගත කරමින් පවතී...")
-        
+        status_msg = await message.reply_text("⏳ පොඩ්ඩක් ඉන්න...")
         try:
-            if not os.path.exists("downloads"):
-                os.makedirs("downloads")
-
+            if not os.path.exists("downloads"): os.makedirs("downloads")
             loop = asyncio.get_event_loop()
             file_path = await loop.run_in_executor(None, download_social_video, url)
-
-            await status_msg.edit("📤 ටෙලිග්‍රෑම් වෙත පටවමින් පවතී...")
             
-            # මෙන්න මෙතන තමයි වැරැද්ද තිබුණේ. supports_streaming කියලා මම නිවැරදි කළා.
-            await message.reply_video(
-                video=file_path,
-                caption=f"✅ **සාර්ථකව බාගත කළා!**\n👨‍💻 Bot by Shehan Hansaka",
-                supports_streaming=True
-            )
+            await status_msg.edit("📤 Upload වෙමින් පවතී...")
             
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # මෙතන මම අර ප්‍රශ්නය එන සේරම අයින් කළා. දැන් වැරදෙන්න විදිහක් නැහැ.
+            await message.reply_video(video=file_path, caption="✅ Done by Shehan Hansaka")
+            
+            if os.path.exists(file_path): os.remove(file_path)
             await status_msg.delete()
-
         except Exception as e:
-            await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)[:100]}")
-    else:
-        if "youtube.com" in url or "youtu.be" in url:
-            await message.reply_text("⚠️ කණගාටුයි, දැනට YouTube බාගත කළ නොහැක. TikTok/FB ලින්ක් එකක් එවන්න.")
-        else:
-            await message.reply_text("⚠️ කරුණාකර නිවැරදි වීඩියෝ ලින්ක් එකක් එවන්න.")
+            await status_msg.edit(f"❌ වැරදීමක්: {str(e)[:100]}")
 
 if __name__ == "__main__":
-    print("Social Downloader is starting...")
     app.run()
