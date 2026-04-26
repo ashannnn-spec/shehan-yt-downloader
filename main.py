@@ -13,11 +13,11 @@ app = Client("shehan_yt_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 # --- DOWNLOADER FUNCTION ---
 def download_video(url):
     ydl_opts = {
-        # GitHub එකට දාපු cookies.txt ෆයිල් එක පාවිච්චි කිරීම
         'cookiefile': 'cookies.txt', 
-        'format': 'best',
+        # Format එක වෙනස් කළා - වීඩියෝ සහ ඕඩියෝ දෙකම තියෙන හොඳම තත්ත්වය තෝරනවා
+        'format': 'best[ext=mp4]/best', 
         'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'max_filesize': 500 * 1024 * 1024, # 500MB Limit
+        'max_filesize': 500 * 1024 * 1024,
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
@@ -32,8 +32,8 @@ def download_video(url):
 async def start(client, message):
     await message.reply_text(
         f"👋 ආයුබෝවන් {message.from_user.first_name}!\n\n"
-        "🚀 **Shehan Youtube Downloader** සක්‍රීයයි.\n"
-        "YouTube Link එක එවන්න, මම එය බාගත කර දෙන්නම්."
+        "🚀 **Shehan Youtube Downloader** දැන් වැඩ.\n"
+        "YouTube Link එක එවන්න."
     )
 
 @app.on_message(filters.text & filters.private)
@@ -48,35 +48,26 @@ async def handle_download(client, message):
 
             await status_msg.edit("📥 බාගත වෙමින් පවතී (Downloading)...")
             
-            # Async විදිහට download එක run කරනවා
             loop = asyncio.get_event_loop()
             file_path = await loop.run_in_executor(None, download_video, url)
 
             await status_msg.edit("📤 Telegram වෙත පටවමින් පවතී (Uploading)...")
             
-            # වීඩියෝව යැවීම
             await message.reply_video(
                 video=file_path,
-                caption=f"✅ **සාර්ථකව බාගත කළා!**\n\n👨‍💻 Bot by Shehan Hansaka",
+                caption=f"✅ **Shehan Hansaka Bot** මගින් බාගත කළා.",
                 supports_hosting=True
             )
             
-            # සර්වර් එකේ ඉඩ ඉතිරි කර ගැනීමට file එක මකා දැමීම
             if os.path.exists(file_path):
                 os.remove(file_path)
             await status_msg.delete()
 
         except Exception as e:
-            error_text = str(e)
-            # Cookie එකේ අවුලක් හෝ Block එකක් දැයි පරීක්ෂා කිරීම
-            if "Sign in to confirm" in error_text:
-                await status_msg.edit("❌ YouTube එකෙන් තවමත් බ්ලොක් කරනවා. කරුණාකර අලුත් cookies.txt එකක් දාන්න.")
-            else:
-                await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {error_text[:100]}")
+            await status_msg.edit(f"❌ වැරදීමක් සිදුවුණා: {str(e)[:150]}")
     else:
         await message.reply_text("⚠️ කරුණාකර නිවැරදි YouTube ලින්ක් එකක් එවන්න.")
 
-# බොට් ක්‍රියාත්මක කිරීම
 if __name__ == "__main__":
-    print("Shehan's Bot is Starting with Cookies...")
+    print("Bot is Starting...")
     app.run()
